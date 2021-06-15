@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.jornadacolaborativa.microservice.payment.saga.order.model.Order;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequestMapping("/orders")
 public class OrderController {
 
     private final OrderService orderService;
@@ -26,22 +28,22 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @PostMapping("orders/create")
+    @PostMapping
     public Mono<OrderPurchase> createOrder(@RequestBody Order order) {
         return orderService.createOrder(order);
     }
 
-    @GetMapping("orders/all")
+    @GetMapping
     public Flux<OrderPurchase> getAllOrders() {
         return orderService.getAll();
     }
 
-    @GetMapping(path = "orders/all/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(path = "all/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<List<OrderPurchase>> getAllOrdersStream() {
         return orderService.reactiveGetAll();
     }
 
-    @GetMapping("orders/{id}")
+    @GetMapping("/{id}")
     public Mono<OrderPurchase> getOrderById(@PathVariable Integer id) {
         return orderService.getOrderById(id);
     }
