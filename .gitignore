@@ -78,6 +78,8 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/
 
+.project
+.settings
 .factorypath
 .classpath
 .factorypath
