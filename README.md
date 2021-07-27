@@ -1,61 +1,47 @@
-## [Choreography Saga Pattern](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/saga/saga) - Payment Microservices
-### [Medium Article](https://medium.com/@johnchang94/choreography-saga-pattern-with-spring-cloud-kafka-ad46f01fc30a) - Explanation In Depth
-### Implemented with 
-- Spring Cloud Stream with Apache Kafka Binder
+### Este exemplo foi implementado utilizando as seguinte tecnologias:
+- Spring Cloud Stream e Apache Kafka Binder
 - Reactive Spring
-- Using reactive programming to return `Flux` from the blocking JDBC API.
+- Utilização de programação reativa para retornar o `Flux` a partir da API JDBC bloqueante.
 
-Operations persising to the database have a dedicated, well-tuned thread pool as it can isolate blocking IO calls separately from the application.
-
-### System Design
+### Arquitetura do Sistema
 
 <p>
-    <img src="Choreography Saga.jpg" width="1200" height="600" />
+    <img src="saga-choreography.png"/>
 </p>
 
-#### To start ZooKeeper and Kafka Brokers
-```
-cd docker
-```
 
-- #### Run 
+#### Para execução do docker compose
 ```
 docker-compose up
 ```
 
-### Alternatively run Kafka locally by download binaries
-#### Kafka Binary Distribution [Download](http://apachemirror.wuchna.com/kafka/2.3.1).
-
-#### Kafka Docker
-- Once the Kafka Docker containers are running, go onto `localhost:9000` and create a cluster `Click 'Add Cluster'` with any name e.g. `payment-saga`.
-- Under `Cluster Zookeeper Hosts` enter `zoo:2181`
 ### Topics
-- There are 3 topics which the Order and Payment Services use; these must be created before starting both applications.
+- Existem 3 tópicos que são utilizados pelo microsserviço de Order e Payment
 ```
 - orders
 - payments
 - transactions
 ```
 
-#### Run
-- Run the Order Service and the Payment Service application
-- Make a POST Request to `localhost:9192/orders/create` with request body: 
+#### Execução
+- Execute o microsserviço Order e Payment 
+- Faça um POST Request na URL `localhost:9192/orders/create` com o corpo do request: 
 ```
 {
     "userId": 1,
     "productId": 1
 }
 ```
-- Make a GET Request to `localhost:9192/orders/all` and see the order status updated
+- Faça um GET Request para a URL `localhost:9192/orders/all` e veja o status do pedido atualizado.
 
-#### Data Flow
-- The Order Service application takes in an `Order` as a request,
-which creates and sends an `OrderPurchaseEvent` to the Kafka topic `orders` which is processed by `OrderPurchaseEventHandler` in the payment service.
-- `OrderPurchaseEventHandler` processes the event and calculates if user has enough credit. If so,
-it sets the generated `PaymentEvent` status to `APPROVED`, otherwise `DECLINED`.
-- A `PaymentEvent` is emitted to the Kafka topic `payments`, which the `PaymentEventHandler` in the Payment Service application
-listens for.
-- If the `PaymentEvent` status is `APPROVED`, it saves the transaction in the `TransactionRepository`.
-A `TransactionEvent` is emitted to the `transactions` topic.
-- The `TransactionEventConsumer` reads this in the order service, if successful, the `OrderRepository` saves this as 
-`ORDER_COMPLETED`, else `ORDER_FAILED`
+#### Fluxo dos dados
+- O microsserviço Order aceita uma `Order` como uma solicitação,
+e este cria e envia um `OrderPurchaseEvent` para o tópico do Kafka `orders` que é processado pelo método `OrderPurchaseEventHandler` no microsserviço Payment.
+
+- O método `OrderPurchaseEventHandler` do Microsserviço Payment processa o evento e calcula se o usuário possui crédito suficiente para aquele determinado pedido. É setado o status para `APPROVED`, caso contrário, `DECLINED`.
+
+- O evento `PaymentEvent` é enviado para o tópico Kafka `payments` através do  método `PaymentEventHandler` do microserviço Payment.
+
+- Se o status do método `PaymentEvent` for `APPROVED`, ele salva a transação no `TransactionRepository`. Um evento `TransactionEvent` é enviado para o tópico `transactions`.
+
+- O método `TransactionEventConsumer` do microsserviço Order recebe as informações, se for bem-sucedido, o `OrderRepository` salva isso como `ORDER_COMPLETED`, senão `ORDER_FAILED`
